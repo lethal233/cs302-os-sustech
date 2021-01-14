@@ -89,3 +89,11 @@ lint/tmp/
 
 #build
 build/
+
+#cmake-build-debug
+cmake-build-debug/
+
+CMakeLists.txt
+
+#.idea
+.idea/
