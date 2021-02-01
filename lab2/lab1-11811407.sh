@@ -21,10 +21,11 @@ if [ ! -e "$outputPath" ]; then
     fi
 fi
 :>"$outputPath" # clear the file content
+set -f # to disable the universal signal
 init2(){
     echo "[${1##*/}]" >> "$outputPath"
     FILES=($(ls "$1"))
-    for file in ${FILES[@]}
+    for file in ${FILES[*]}
     do
         absFile=$1"/"${file}
         echo "${absFile}" >> "$outputPath"
@@ -65,4 +66,4 @@ bfs "$directoryPath"
 echo "[Directories Count]:${dirCount}" >> "$outputPath"
 echo "[Files Count]:${fileCount}" >> "$outputPath"
 IFS=$SAVEIFS
-# https://blog.csdn.net/mrqiang9001/article/details/107733911
+set +f # to enable the universal signal
