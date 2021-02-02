@@ -23,11 +23,19 @@ fi
 :>"$outputPath" # clear the file content
 set -f # to disable the universal signal
 init2(){
-    echo "[${1##*/}]" >> "$outputPath"
+    if [ "$1" == "/" ]; then
+        echo "[/]" >> "$outputPath"
+    else
+        echo "[${1##*/}]" >> "$outputPath"
+    fi
     FILES=($(ls "$1"))
     for file in ${FILES[*]}
     do
-        absFile=$1"/"${file}
+        if [ "$1" == "/" ]; then
+            absFile="/"${file}
+        else
+            absFile=$1"/"${file}
+        fi
         echo "${absFile}" >> "$outputPath"
         if [ -d "${absFile}" ]; then
             dirCount=$((${dirCount}+1))
