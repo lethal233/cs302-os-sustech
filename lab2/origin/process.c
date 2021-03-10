@@ -4,6 +4,9 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/termios.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int main()
 {
@@ -24,7 +27,7 @@ int main()
 		/* 使子进程所在的进程组成为前台进程组，然后执行vi */
 		setpgid(0,0);
 		tcsetpgrp(0,getpid());
-		execvp("/bin/vi","vi",NULL);
+		execl("/bin/ls","ls","/home/lori",NULL);
 		exit(-1);
 	}
    
@@ -32,7 +35,7 @@ int main()
 	setpgid(cpid,cpid);/* 设置进程组 */
 	tcsetpgrp(0,cpid);/* 设置控制终端为子进程拥有 */
 	waitpid(cpid,NULL,0);/* 父进程等待子进程执行完毕，所在进程组成为前台进程组 */
-	tcsetpgrp(0,ppid);
+	fprintf(stdout,"%d\n",tcsetpgrp(0,ppid));
 
 	//父进程等待终端输入，然后回显
 	while(1)

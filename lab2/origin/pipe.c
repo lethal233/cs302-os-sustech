@@ -1,7 +1,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-
+#include<unistd.h>
+#include<stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int main(int argc, char *argv[])
 {
@@ -35,15 +38,15 @@ int main(int argc, char *argv[])
 	}
 
 	if (!pid[0])/* ls子进程 */
-	{
+	{fprintf(stdout,"41\n");
 		read(pipe_fd[0],rwBuffer,1024);//度管道，会阻塞，等待父进程发布命令
 		fprintf(stdout,"\n\n-----------------------%s|rec---------------------------\n\n",rwBuffer);
-
+		fprintf(stdout,"44\n");
 		/*不需要再读取了,关闭读端*/
 		close(pipe_fd[0]);
 		dup2(pipe_fd[1],1);/*将管道的写描述符复制给标准输出,然后关闭*/
 		close(pipe_fd[1]);
-
+		fprintf(stdout,"49\n");
 		execvp(prog1_argv[0], prog1_argv);//调用ls
 	}
   
@@ -59,8 +62,8 @@ int main(int argc, char *argv[])
 			close(pipe_fd[1]);
 			dup2(pipe_fd[0],0);/*将管道的读描述符复制给标准输入，然后关闭*/
 			close(pipe_fd[0]);
-      
-			execvp(prog2_argv[0],prog2_argv);
+			fprintf(stdout,"65\n");
+			execvp(prog2_argv[0],prog2_argv);//*must be executed?**// /bin/more ...
 		}else{
 			fprintf(stdout,"\n\n-------------------------%s|send---------------------\n\n",rwBuffer);
 			sprintf(rwBuffer,"start1");

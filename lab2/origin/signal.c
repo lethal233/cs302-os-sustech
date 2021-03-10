@@ -5,6 +5,9 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/termios.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 void ChildHandler (int sig, siginfo_t* sip, void* notused)/* 信号处理函数 */
 
