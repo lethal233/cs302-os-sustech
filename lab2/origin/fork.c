@@ -26,8 +26,8 @@ int main(int argc,char* argv[])
 
 	if (!pid)/* 这是子进程，执行命令ls */
 	{
-		printf("argc = %d, argv[0] = %s\n",argc,argv[0]);
-		// fflush(stdout);
+		printf("argc = %d, argv[0] = %s",argc,argv[0]);
+		fflush(stdout);
 		execvp(prog_argv[0],prog_argv);
 	}
 

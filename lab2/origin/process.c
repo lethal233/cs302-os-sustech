@@ -8,6 +8,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+// void sigttouhandler(int signum)
+// {
+// 	// 首先通过handler接收, 看收到的信号是哪个, 然后在里面设置父进程为前台进程组
+// 	int ppid = getpid();
+// 	printf("pid: %d SIGtou received %d.\n", ppid, signum);
+// 	tcsetpgrp(0,ppid);
+// 	sleep(1);
+// 	return;
+// }
+
 int main()
 {
 	int cpid;/* 保存子进程的id号 */
@@ -23,11 +33,12 @@ int main()
 	if (!cpid)
 	{
 		fprintf(stdout,"ID(child)=%d\n",getpid());
-
 		/* 使子进程所在的进程组成为前台进程组，然后执行vi */
 		setpgid(0,0);
 		tcsetpgrp(0,getpid());
-		execl("/bin/ls","ls","/home/lori",NULL);
+		// char* argv[] = {"vi",NULL};
+		// execvp("/bin/vi",argv);
+		execlp("/bin/vi","vi",NULL);
 		exit(-1);
 	}
    
@@ -35,7 +46,8 @@ int main()
 	setpgid(cpid,cpid);/* 设置进程组 */
 	tcsetpgrp(0,cpid);/* 设置控制终端为子进程拥有 */
 	waitpid(cpid,NULL,0);/* 父进程等待子进程执行完毕，所在进程组成为前台进程组 */
-	fprintf(stdout,"%d\n",tcsetpgrp(0,ppid));
+	signal(SIGTTOU,SIG_IGN);
+	tcsetpgrp(0,ppid);
 
 	//父进程等待终端输入，然后回显
 	while(1)
