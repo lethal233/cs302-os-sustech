@@ -19,3 +19,4 @@ CMakeLists.txt
 */*/*.out
 
 */*.file
+!lab6_report5/banker/Sample.out
