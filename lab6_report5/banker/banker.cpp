@@ -145,6 +145,7 @@ int main()
                 Node *old = m[pid];
                 m.erase(pid);
                 release(old);
+                delete old;
                 cout << "OK" << endl;
             }
             else
