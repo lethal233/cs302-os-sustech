@@ -1,5 +1,4 @@
 #include <bits/stdc++.h>
-#include <unistd.h>
 
 using namespace std;
 
@@ -27,9 +26,25 @@ struct lru
     lru *prev;
     lru *next;
 
-    lru(int page)
+    explicit lru(int page)
     {
         this->page = page;
+        this->prev = nullptr;
+        this->next = nullptr;
+    }
+};
+
+struct clock_node
+{
+    int page;
+    clock_node *prev, *next;
+    int count;
+
+    explicit clock_node(int page)
+    {
+        this->page = page;
+        prev = next = nullptr;
+        count = 0;
     }
 };
 
@@ -62,11 +77,13 @@ int main()
     }
     else if (A == 2)
     {
+        min_();
         //min
     }
     else if (A == 3)
     {
         //clock
+        clock_();
     }
     printf("Hit ratio = %.2f%%", hit * 100.0 / N);
     return 0;
@@ -82,15 +99,13 @@ void fifo_()
         int current_page = read();
         if (mp.find(current_page) == mp.end())
         { // 不存在
-            if (q.size() < K)
-            { // 队列未满
-                q.push(current_page);
-                mp[current_page] = 1;
-            }
-            else
-            {
+            q.push(current_page);
+            mp[current_page] = 1;
+            if (q.size() >= K)
+            { // 队列已满
+                int page = q.front();
+                mp.erase(page);
                 q.pop();
-                mp.erase(current_page);
             }
         }
         else
@@ -113,17 +128,13 @@ void lru_()
         int current_page = read();
         if (mp.find(current_page) == mp.end())
         {
-            if (mp.size() < K)
-            {
-                lru *now = new lru(current_page);
-                mp[current_page] = now;
-                // 放在最前面
-                now->next = head->next;
-                head->next->prev = now;
-                now->prev = head;
-                head->next = now;
-            }
-            else
+            lru *now = new lru(current_page);
+            mp[current_page] = now;
+            now->next = head->next;
+            head->next->prev = now;
+            now->prev = head;
+            head->next = now;
+            if (mp.size() >= K)
             {
                 // 移除最后一个元素
                 lru *to_remove = tail->prev;
@@ -136,15 +147,132 @@ void lru_()
         else
         {
             ++hit;
+            if (mp.size() == 1)
+                continue;
             lru *now = mp[current_page];
-            now->prev->next = now->next;
-            now->next->prev = now->prev;
+            lru *p = now->prev;
+            lru *n = now->next;
+            p->next = n;
+            n->prev = p;
+            lru *hn = head->next;
             now->prev = head;
-            now->next = head->next;
+            now->next = hn;
+            hn->prev = now;
             head->next = now;
-            head->next->prev = now;
+
+            //            now->prev->next = now->next;
+            //            now->next->prev = now->prev;
+            //            now->prev = head;
+            //            now->next = head->next;
+            //            head->next = now;
+            //            head->next->prev = now;
         }
     }
     delete head;
     delete tail;
+}
+
+void min_()
+{
+    hit = 0;
+    priority_queue<pair<int, int>> q;
+    unordered_map<int, int> mp;
+    vector<int> pages;
+    vector<int> next = vector(N, 0x7ffffff);
+    for (int i = 0; i < N; ++i)
+    {
+        pages.push_back(read());
+    }
+    for (int i = N - 1; i >= 0; --i)
+    {
+        if (mp.find(pages[i]) != mp.end())
+        { // 有entry，要更新
+            next[i] = mp[pages[i]];
+        }
+        mp[pages[i]] = i;
+    }
+    mp.clear();
+    for (int i = 0; i < N; ++i)
+    {
+        if (mp.find(pages[i]) == mp.end())
+        {
+            if (q.size() >= K)
+            {
+                auto t = q.top();
+                q.pop();
+                mp.erase(t.second);
+            }
+            mp[pages[i]] = 1;
+        }
+        else
+        { //TODO: 需要判断条件吗?
+            ++hit;
+        }
+        q.push(make_pair(next[i], pages[i]));
+    }
+}
+
+void clock_()
+{
+    hit = 0;
+    clock_node *pointer;
+    auto *head = new clock_node(-1);
+    auto *tail = new clock_node(-2);
+    head->next = tail;
+    tail->prev = head;
+    unordered_map<int, clock_node *> mp;
+    for (int i = 0; i < N; ++i)
+    {
+        int current_page = read();
+        auto *cur = new clock_node(current_page);
+        cur->count = 1;
+        if (mp.find(current_page) == mp.end())
+        {
+            if (mp.size() >= K)
+            {
+                while (true)
+                {
+                    if (pointer->count == 0)
+                    {
+                        auto *b = pointer->prev;
+                        auto *c = pointer->next;
+                        mp.erase(pointer->page);
+                        delete pointer;
+                        cur->prev = b;
+                        b->next = cur;
+                        cur->next = c;
+                        c->prev = cur;
+                        pointer = cur;
+                        mp[current_page] = cur;
+                        break;
+                    }
+                    else
+                    {
+                        pointer->count = 0;
+                    }
+                }
+            }
+            else
+            {
+                auto *tmp = tail->prev;
+                tmp->next = cur;
+                cur->next = tail;
+                tail->prev = cur;
+                cur->prev = tmp;
+                mp[current_page] = cur;
+                if (mp.size() == K)
+                {
+                    tmp = head->next;
+                    cur->next = tmp;
+                    tmp->prev = cur;
+                    pointer = tmp;
+                }
+            }
+        }
+        else
+        {
+            ++hit;
+            mp[current_page]->count = 1;
+        }
+    }
 }
