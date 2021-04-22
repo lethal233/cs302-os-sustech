@@ -50,12 +50,17 @@ void kill_process();					   //杀死对应进程并释放其空间与结构体
 void Usemy_algo(int id);				   //使用对应的分配算法
 
 void insert_freeblock(free_block *);
+
 void remove_freeblock(free_block *);
+
 void insert_allocatedblock(allocated_block *);
-void remove_allocatedblock(allocated_block *);
+
 int best_fit_allocation(allocated_block *);
+
 int worst_fit_allocation(allocated_block *);
+
 int first_fit_allocation(allocated_block *);
+
 int buddy_allocation(allocated_block *);
 
 int main()
@@ -79,7 +84,7 @@ int main()
 		case 2:
 		{
 			printf("Choose an algorithm\n");
-			printf("1: Best Fit\n 2: Worst Fit\n 3: First Fit\n 4: Buddy System\n");
+			printf(" 1: Best Fit\n 2: Worst Fit\n 3: First Fit\n 4: Buddy System\n");
 			scanf("%d", &mode);
 			if (mode < 1 || mode > 4)
 			{
@@ -120,7 +125,7 @@ allocated_block *find_process(int id)
 	allocated_block *tmp = allocated_block_head;
 	while (tmp != nullptr)
 	{
-		if (tmp->pid = id)
+		if (tmp->pid == id)
 			break;
 		tmp = tmp->next;
 	}
@@ -173,32 +178,41 @@ int allocate_mem(allocated_block *ab)
 	{
 	case 2: //worst fit
 	{
+		return worst_fit_allocation(ab);
 	}
 	case 3: // first fit
 	{
+		return first_fit_allocation(ab);
 	}
 	case 4: // buddy
 	{
+		return buddy_allocation(ab);
 	}
 	default: // best fit
 	{
+		return best_fit_allocation(ab);
 	}
 	}
 }
 
 int create_new_process()
 { //创建新进程
-	int mem_sz = 0;
+	int mem_sz;
 	printf("Please input memory size\n");
 	scanf("%d", &mem_sz);
 	// Write your code here
 	if (free_block_head == nullptr || mem_sz <= 0 || mem_sz > mem_size)
 		return -1;
-	allocated_block *new_process = new allocated_block();
+	auto *new_process = new allocated_block();
 	new_process->pid = ++pid;
-	new_process->size = mem_sz;
-	new_process->next = nullptr; //TODO: remember to delete
-	return allocate_mem(new_process);
+	new_process->size = mem_sz; //TODO: remember to delete
+	int code = allocate_mem(new_process);
+	if (code == -1)
+	{
+		printf("No memory to set...");
+		delete new_process;
+	}
+	return code;
 }
 
 void swap(int *p, int *q)
@@ -206,7 +220,6 @@ void swap(int *p, int *q)
 	int tmp = *p;
 	*p = *q;
 	*q = tmp;
-	return;
 }
 
 void rearrange()
@@ -237,7 +250,7 @@ int free_mem(allocated_block *ab)
 { //释放某一块的内存
 	if (ab == nullptr)
 		return -1;
-	free_block *before, *after;
+	free_block *before = nullptr, *after = nullptr;
 	for (free_block *f = free_block_head; f != nullptr; f = f->next)
 	{
 		if (f->start_addr + f->size == ab->start_addr)
@@ -270,7 +283,7 @@ int free_mem(allocated_block *ab)
 	}
 	else
 	{
-		free_block *new_free = new free_block();
+		auto *new_free = new free_block();
 		new_free->start_addr = ab->start_addr;
 		new_free->size = ab->size;
 		ab->next = nullptr;
@@ -331,7 +344,6 @@ void display_mem_usage()
 		puts("No allocated block");
 	else
 		printf("Totaly %d allocated blocks\n", cnt);
-	return;
 }
 
 void kill_process()
@@ -350,47 +362,28 @@ void kill_process()
 
 void insert_freeblock(free_block *new_free)
 {
-	if (free_block_head == nullptr)
-	{
-		free_block_head = new_free;
-		return;
-	}
-	free_block *tmp, *f;
-	for (f = free_block_head; f != nullptr; f = f->next)
-	{
-		if (f->start_addr < new_free->start_addr)
-			tmp = f;
-		else
-		{
-			tmp->next = new_free;
-			new_free->next = f;
-			break;
-		}
-	}
-	if (f == nullptr)
-	{
-		tmp->next = new_free;
-		new_free->next = nullptr;
-	}
+	new_free->next = free_block_head;
+	free_block_head = new_free;
 }
+
 void remove_freeblock(free_block *to_remove)
 {
-	free_block *a = nullptr, *b;
-	for (free_block *f = free_block_head; f != nullptr; f = f->next)
+	if (to_remove == free_block_head)
+		free_block_head = free_block_head->next;
+	else
 	{
-		b = f->next;
-		if (f == to_remove)
+		for (free_block *f = free_block_head; f != nullptr; f = f->next)
 		{
-			if (a == nullptr)
-				free_block_head = b;
-			else
-				a->next = b;
-			delete f;
-			break;
+			if (to_remove == f->next)
+			{
+				f->next = to_remove->next;
+				break;
+			}
 		}
-		a = f;
 	}
+	delete to_remove;
 }
+
 void insert_allocatedblock(allocated_block *ab)
 {
 	ab->next = allocated_block_head;
@@ -399,11 +392,32 @@ void insert_allocatedblock(allocated_block *ab)
 
 int best_fit_allocation(allocated_block *ab)
 {
+	free_block *tmp = nullptr;
+	for (free_block *fb = free_block_head; fb != nullptr; fb = fb->next)
+	{
+		if ((fb->size >= ab->size) && (tmp == nullptr || tmp->size > fb->size))
+		{
+			tmp = fb;
+		}
+	}
+	if (tmp == nullptr)
+		return -1;
+	ab->start_addr = tmp->start_addr;
+	if (tmp->size == ab->size)
+		remove_freeblock(tmp);
+	else
+	{
+		tmp->size -= ab->size;
+		tmp->start_addr += ab->size;
+	}
+	insert_allocatedblock(ab);
+	return 1;
 }
+
 int worst_fit_allocation(allocated_block *ab)
 {
 	int max_size = -1;
-	free_block *tmp;
+	free_block *tmp = nullptr;
 	for (free_block *fb = free_block_head; fb != nullptr; fb = fb->next)
 	{
 		if (fb->size >= ab->size && fb->size > max_size)
@@ -414,30 +428,44 @@ int worst_fit_allocation(allocated_block *ab)
 	}
 	if (tmp == nullptr)
 		return -1;
+	ab->start_addr = tmp->start_addr;
 	if (tmp->size == ab->size)
-	{
-	}
-}
-int first_fit_allocation(allocated_block *ab)
-{
-	rearrange(); //TODO: 可以更改位置
-	free_block *fb;
-	for (fb = free_block_head; fb != nullptr; fb = fb->next)
-		if (fb->size >= ab->size)
-			break;
-	if (fb == nullptr)
-		return -1;
-	ab->start_addr = fb->start_addr;
-	if (fb->size == ab->size)
-		remove_freeblock(fb);
+		remove_freeblock(tmp);
 	else
 	{
-		fb->size -= ab->size;
-		fb->start_addr += ab->size;
+		tmp->size -= ab->size;
+		tmp->start_addr += ab->size;
 	}
 	insert_allocatedblock(ab);
-	return 0;
+	return 1;
 }
+
+int first_fit_allocation(allocated_block *ab)
+{
+	// rearrange(); //TODO: 可以更改位置, 我觉得没必要用这个方法
+	free_block *tmp = nullptr;
+	for (free_block *fb = free_block_head; fb != nullptr; fb = fb->next)
+	{
+		if (fb->size >= ab->size)
+		{
+			if (tmp == nullptr || fb->start_addr > tmp->start_addr)
+				tmp = fb;
+		}
+	}
+	if (tmp == nullptr)
+		return -1;
+	ab->start_addr = tmp->start_addr;
+	if (tmp->size == ab->size)
+		remove_freeblock(tmp);
+	else
+	{
+		tmp->size -= ab->size;
+		tmp->start_addr += ab->size;
+	}
+	insert_allocatedblock(ab);
+	return 1;
+}
+
 int buddy_allocation(allocated_block *ab)
 {
 }
