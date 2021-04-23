@@ -21,4 +21,3 @@ CMakeLists.txt
 */*.file
 !lab6_report5/banker/Sample.out
 !lab10_report7/sample.out
-!lab9_report6/mm.out
