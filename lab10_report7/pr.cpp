@@ -85,7 +85,7 @@ int main()
         //clock
         clock_();
     }
-    printf("Hit ratio = %.2f%%", hit * 100.0 / N);
+    printf("Hit ratio = %.2f%%\n", hit * 100.0 / N);
     return 0;
 }
 
@@ -178,7 +178,7 @@ void min_()
     priority_queue<pair<int, int>> q;
     unordered_map<int, int> mp;
     vector<int> pages;
-    vector<int> next = vector(N, 0x7ffffff);
+    vector<int> next(N, 0x7ffffff);
     for (int i = 0; i < N; ++i)
     {
         pages.push_back(read());
