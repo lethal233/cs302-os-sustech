@@ -67,12 +67,12 @@ int main()
     N = read();
     if (A == 0)
     {
-        fifo_();
+        fifo_(); //done
         //fifo
     }
     else if (A == 1)
     {
-        lru_();
+        lru_(); //done
         //lru
     }
     else if (A == 2)
@@ -99,14 +99,14 @@ void fifo_()
         int current_page = read();
         if (mp.find(current_page) == mp.end())
         { // 不存在
-            q.push(current_page);
-            mp[current_page] = 1;
             if (q.size() >= K)
             { // 队列已满
                 int page = q.front();
                 mp.erase(page);
                 q.pop();
             }
+            q.push(current_page);
+            mp[current_page] = 1;
         }
         else
         {
@@ -128,12 +128,6 @@ void lru_()
         int current_page = read();
         if (mp.find(current_page) == mp.end())
         {
-            lru *now = new lru(current_page);
-            mp[current_page] = now;
-            now->next = head->next;
-            head->next->prev = now;
-            now->prev = head;
-            head->next = now;
             if (mp.size() >= K)
             {
                 // 移除最后一个元素
@@ -143,6 +137,12 @@ void lru_()
                 mp.erase(to_remove->page);
                 delete to_remove;
             }
+            lru *now = new lru(current_page);
+            mp[current_page] = now;
+            now->next = head->next;
+            head->next->prev = now;
+            now->prev = head;
+            head->next = now;
         }
         else
         {
@@ -178,7 +178,7 @@ void min_()
     priority_queue<pair<int, int>> q;
     unordered_map<int, int> mp;
     vector<int> pages;
-    vector<int> next(N, 0x7ffffff);
+    vector<int> next(N, 0x7fffffff);
     for (int i = 0; i < N; ++i)
     {
         pages.push_back(read());
@@ -196,7 +196,7 @@ void min_()
     {
         if (mp.find(pages[i]) == mp.end())
         {
-            if (q.size() >= K)
+            if (mp.size() >= K) // modify
             {
                 auto t = q.top();
                 q.pop();
@@ -205,7 +205,7 @@ void min_()
             mp[pages[i]] = 1;
         }
         else
-        { //TODO: 需要判断条件吗?
+        { //TODO: need condition?
             ++hit;
         }
         q.push(make_pair(next[i], pages[i]));
@@ -224,20 +224,21 @@ void clock_()
     for (int i = 0; i < N; ++i)
     {
         int current_page = read();
-        auto *cur = new clock_node(current_page);
-        cur->count = 1;
         if (mp.find(current_page) == mp.end())
         {
+            auto *cur = new clock_node(current_page);
+            cur->count = 1;
+            clock_node *pt = pointer;
             if (mp.size() >= K)
             {
                 while (true)
                 {
-                    if (pointer->count == 0)
+                    if (pt->count == 0)
                     {
-                        auto *b = pointer->prev;
-                        auto *c = pointer->next;
-                        mp.erase(pointer->page);
-                        delete pointer;
+                        auto *b = pt->prev;
+                        auto *c = pt->next;
+                        mp.erase(pt->page);
+                        delete pt;
                         cur->prev = b;
                         b->next = cur;
                         cur->next = c;
@@ -248,7 +249,8 @@ void clock_()
                     }
                     else
                     {
-                        pointer->count = 0;
+                        pt->count = 0;
+                        pt = pt->next;
                     }
                 }
             }
@@ -267,12 +269,14 @@ void clock_()
                     tmp->prev = cur;
                     pointer = tmp;
                 }
+                pointer = cur;
             }
         }
         else
         {
             ++hit;
-            mp[current_page]->count = 1;
+            pointer = mp[current_page];
         }
+        mp[current_page]->count = 1;
     }
 }
