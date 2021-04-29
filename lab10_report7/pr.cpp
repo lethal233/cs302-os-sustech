@@ -85,7 +85,7 @@ int main()
         //clock
         clock_();
     }
-    printf("Hit ratio = %04.2lf%%\n", hit * 100.0 / N);
+    printf("Hit ratio = %05.2lf%%", hit * 100.0 / N);
     return 0;
 }
 
