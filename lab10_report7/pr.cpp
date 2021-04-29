@@ -77,7 +77,7 @@ int main()
     }
     else if (A == 2)
     {
-        min_();
+        min_(); //done
         //min
     }
     else if (A == 3)
@@ -85,7 +85,7 @@ int main()
         //clock
         clock_();
     }
-    printf("Hit ratio = %.2f%%\n", hit * 100.0 / N);
+    printf("Hit ratio = %04.2lf%%\n", hit * 100.0 / N);
     return 0;
 }
 
@@ -179,9 +179,11 @@ void min_()
     unordered_map<int, int> mp;
     vector<int> pages;
     vector<int> next(N, 0x7fffffff);
+    int current_page;
     for (int i = 0; i < N; ++i)
     {
-        pages.push_back(read());
+        current_page = read();
+        pages.push_back(current_page);
     }
     for (int i = N - 1; i >= 0; --i)
     {
@@ -227,10 +229,9 @@ void clock_()
         if (mp.find(current_page) == mp.end())
         {
             auto *cur = new clock_node(current_page);
-            cur->count = 1;
             clock_node *pt = pointer;
             if (mp.size() >= K)
-            {
+            { // full
                 while (true)
                 {
                     if (pt->count == 0)
@@ -238,13 +239,13 @@ void clock_()
                         auto *b = pt->prev;
                         auto *c = pt->next;
                         mp.erase(pt->page);
-                        delete pt;
                         cur->prev = b;
                         b->next = cur;
                         cur->next = c;
                         c->prev = cur;
-                        pointer = cur;
+                        pointer = c;
                         mp[current_page] = cur;
+                        delete pt;
                         break;
                     }
                     else
@@ -256,6 +257,7 @@ void clock_()
             }
             else
             {
+                //TODO:
                 auto *tmp = tail->prev;
                 tmp->next = cur;
                 cur->next = tail;
@@ -267,15 +269,18 @@ void clock_()
                     tmp = head->next;
                     cur->next = tmp;
                     tmp->prev = cur;
-                    pointer = tmp;
+                    pointer = head->next;
                 }
-                pointer = cur;
+                else
+                {
+                    pointer = cur;
+                }
             }
         }
         else
-        {
+        { // no problem
             ++hit;
-            pointer = mp[current_page];
+            // pointer = mp[current_page];// here pointer should not move!!!
         }
         mp[current_page]->count = 1;
     }
